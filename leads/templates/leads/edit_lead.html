@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Lead</title>
+</head>
+<body>
+
+<h2>Edit Lead</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Name:</label><br>
+    <input type="text" name="name" value="{{ lead.name }}"><br><br>
+
+    <label>Email:</label><br>
+    <input type="email" name="email" value="{{ lead.email }}"><br><br>
+
+    <label>Phone:</label><br>
+    <input type="text" name="phone" value="{{ lead.phone }}"><br><br>
+
+    <label>Company:</label><br>
+    <input type="text" name="company" value="{{ lead.company }}"><br><br>
+
+    <label>Source:</label><br>
+    <input type="text" name="source" value="{{ lead.source }}"><br><br>
+
+    <label>Status:</label><br>
+    <input type="text" name="status" value="{{ lead.status }}"><br><br>
+
+    <button type="submit">Update Lead</button>
+
+</form>
+
+</body>
+</html>

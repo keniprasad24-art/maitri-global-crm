@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card shadow-lg border-0 rounded-4 p-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary">🏢 Company List</h2>
+
+    <a href="/companies/add/" class="btn btn-success">
+        + Add Company
+    </a>
+</div>
+
+<input type="text" class="form-control mb-3" placeholder="🔍 Search Company">
+
+<div class="table-responsive">
+
+<table class="table table-hover table-striped align-middle">
+
+<thead class="table-dark">
+<tr>
+<th>ID</th>
+<th>Company</th>
+<th>Email</th>
+<th>Phone</th>
+<th>City</th>
+<th>State</th>
+<th>Country</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for company in companies %}
+
+<tr>
+
+<td>{{ company.id }}</td>
+<td>{{ company.company_name }}</td>
+<td>{{ company.email }}</td>
+<td>{{ company.phone }}</td>
+<td>{{ company.city }}</td>
+<td>{{ company.state }}</td>
+<td>{{ company.country }}</td>
+
+<td>
+
+<a href="{% url 'edit_company' company.id %}" class="btn btn-warning btn-sm">
+✏️ Edit
+</a>
+
+<a href="{% url 'delete_company' company.id %}"
+class="btn btn-danger btn-sm"
+onclick="return confirm('Delete this company?')">
+🗑️ Delete
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

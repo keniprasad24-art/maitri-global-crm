@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">💼 Opportunity List</h2>
+
+<a href="/opportunities/add/" class="btn btn-success mb-3">
+    + Add Opportunity
+</a>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Company</th>
+            <th>Contact</th>
+            <th>Title</th>
+            <th>Value</th>
+            <th>Stage</th>
+            <th>Expected Close</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for opportunity in opportunities %}
+    <tr>
+        <td>{{ opportunity.id }}</td>
+        <td>{{ opportunity.company }}</td>
+        <td>{{ opportunity.contact }}</td>
+        <td>{{ opportunity.title }}</td>
+        <td>₹ {{ opportunity.value }}</td>
+        <td>{{ opportunity.stage }}</td>
+        <td>{{ opportunity.expected_close_date }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
