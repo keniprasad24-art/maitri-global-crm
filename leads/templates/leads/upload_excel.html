@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-success text-white py-3">
+            <h4 class="mb-0"><i class="fa-solid fa-file-excel"></i> Upload Leads via Excel</h4>
+        </div>
+        <div class="card-body p-5">
+            <div class="alert alert-info">
+                <strong>सूचना:</strong> तुमच्या Excel फाईलमध्ये हे कॉलम्स (Headers) असणे गरजेचे आहे: 
+                <br><b>Name, Email, Phone, Company</b>
+            </div>
+            
+            <form method="POST" enctype="multipart/form-data" class="mt-4">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Excel फाईल निवडा (.xlsx किंवा .xls)</label>
+                    <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+                </div>
+                <button type="submit" class="btn btn-success btn-lg px-5 shadow">
+                    Start Uploading
+                </button>
+                <a href="{% url 'lead_list' %}" class="btn btn-secondary btn-lg">Back</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,4 +4,4 @@ from .models import Company
 class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
-        fields = "_all_"
+        fields = "__all__"
