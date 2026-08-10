@@ -26,5 +26,24 @@ class Opportunity(models.Model):
         default='Open'
     )
 
-    def _str_(self):
+    LOST_REASON_CHOICES = [
+        ('Price Too High', 'Price Too High'),
+        ('Customer Not Interested', 'Customer Not Interested'),
+        ('Competitor Chosen', 'Competitor Chosen'),
+        ('No Budget', 'No Budget'),
+        ('No Response', 'No Response'),
+        ('Product Not Suitable', 'Product Not Suitable'),
+        ('Delayed Decision', 'Delayed Decision'),
+        ('Duplicate Lead', 'Duplicate Lead'),
+        ('Other', 'Other'),
+    ]
+
+    lost_reason = models.CharField(
+        max_length=100,
+        choices=LOST_REASON_CHOICES,
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
         return self.title

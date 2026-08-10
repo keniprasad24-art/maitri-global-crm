@@ -1,4 +1,8 @@
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.contrib.auth import update_session_auth_hash
 
 from leads.models import Lead
 from companies.models import Company
@@ -7,31 +11,6 @@ from quotations.models import Quotation
 from invoices.models import Invoice
 from qualified.models import Qualified
 from subscription.models import Subscription
-from django.db.models import Count
-from django.contrib.auth.decorators import login_required
-
-
-@login_required
-def dashboard(request):
-    recent_leads = Lead.objects.order_by('-id')[:5]
-lead_chart_labels = ["New", "Qualified", "Lost"]
-lead_chart_data = [
-    Lead.objects.filter(status="New").count(),
-    Lead.objects.filter(status="Qualified").count(),
-    Lead.objects.filter(status="Lost").count(),
-]
-
-opp_chart_labels = ["Open", "Won", "Lost"]
-from django.shortcuts import render
-
-from leads.models import Lead
-from companies.models import Company
-from opportunities.models import Opportunity
-from quotations.models import Quotation
-from invoices.models import Invoice
-from qualified.models import Qualified
-from subscription.models import Subscription
-from django.contrib.auth.decorators import login_required
 
 
 @login_required
@@ -76,3 +55,49 @@ def dashboard(request):
     }
 
     return render(request, "dashboard_app/dashboard.html", context)
+
+
+@login_required
+def profile_settings(request):
+    user = request.user
+
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        current_password = request.POST.get("current_password", "")
+        new_password = request.POST.get("new_password", "")
+        confirm_password = request.POST.get("confirm_password", "")
+
+        if not username:
+            messages.error(request, "Username cannot be empty.")
+            return render(request, "dashboard_app/profile.html")
+
+        if username != user.username:
+            if User.objects.filter(username=username).exclude(id=user.id).exists():
+                messages.error(request, "This username is already taken.")
+                return render(request, "dashboard_app/profile.html")
+
+        if new_password or confirm_password or current_password:
+            if not user.check_password(current_password):
+                messages.error(request, "Current password is incorrect.")
+                return render(request, "dashboard_app/profile.html")
+
+            if new_password != confirm_password:
+                messages.error(request, "New password and confirm password do not match.")
+                return render(request, "dashboard_app/profile.html")
+
+            if len(new_password) < 6:
+                messages.error(request, "Password must be at least 6 characters.")
+                return render(request, "dashboard_app/profile.html")
+
+            user.set_password(new_password)
+
+        user.username = username
+        user.save()
+
+        if new_password:
+            update_session_auth_hash(request, user)
+
+        messages.success(request, "Profile updated successfully.")
+        return render(request, "dashboard_app/profile.html")
+
+    return render(request, "dashboard_app/profile.html")
