@@ -26,6 +26,10 @@ SECRET_KEY = 'django-insecure-&3pi^b$n97^cv-bc8#@ri#=e)-7bul&7+ya_(%m%_)a&@j=k)-
 DEBUG = True
 
 ALLOWED_HOSTS = ['10.70.36.31', 'localhost', '127.0.0.1', 'maitri-global-crm.onrender.com']
+CSRF_TRUSTED_ORIGINS = [
+    'https://maitri-global-crm.onrender.com',
+]
+
 
 
 
