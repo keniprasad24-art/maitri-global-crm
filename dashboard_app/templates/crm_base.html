@@ -394,43 +394,43 @@ footer{
 
     <div class="sidebar-section">Workspace</div>
 
-    <a href="{% url 'dashboard' %}">
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <i class="fa-solid fa-gauge"></i> Dashboard
     </a>
 
-    <a href="{% url 'lead_list' %}">
+    <a href="{% url 'lead_list' %}" class="{% if request.resolver_match.url_name == 'lead_list' %}active{% endif %}">
         <i class="fa-solid fa-user-plus"></i> Leads
     </a>
 
-    <a href="{% url 'company_list' %}">
+    <a href="{% url 'company_list' %}" class="{% if request.resolver_match.url_name == 'company_list' %}active{% endif %}">
         <i class="fa-solid fa-building"></i> Clients
     </a>
 
-    <a href="{% url 'qualified_list' %}">
+    <a href="{% url 'qualified_list' %}" class="{% if request.resolver_match.url_name == 'qualified_list' %}active{% endif %}">
         <i class="fa-solid fa-user-check"></i> Qualified
     </a>
 
-    <a href="{% url 'opportunity_list' %}">
+    <a href="{% url 'opportunity_list' %}" class="{% if request.resolver_match.url_name == 'opportunity_list' %}active{% endif %}">
         <i class="fa-solid fa-handshake"></i> Opportunities
     </a>
 
     <div class="sidebar-section">Sales</div>
 
-    <a href="{% url 'quotation_list' %}">
+    <a href="{% url 'quotation_list' %}" class="{% if request.resolver_match.url_name == 'quotation_list' %}active{% endif %}">
         <i class="fa-solid fa-file-lines"></i> Quotations
     </a>
 
-    <a href="{% url 'invoice_list' %}">
+    <a href="{% url 'invoice_list' %}" class="{% if request.resolver_match.url_name == 'invoice_list' %}active{% endif %}">
         <i class="fa-solid fa-file-invoice-dollar"></i> Invoices
     </a>
 
     <div class="sidebar-section">Analytics</div>
 
-    <a href="{% url 'report_dashboard' %}">
+    <a href="{% url 'report_dashboard' %}" class="{% if request.resolver_match.url_name == 'report_dashboard' %}active{% endif %}">
         <i class="fa-solid fa-chart-column"></i> Reports
     </a>
 
-    <a href="/dashboard/profile/">
+    <a href="/dashboard/profile/" class="{% if request.path == '/dashboard/profile/' %}active{% endif %}">
         <i class="fa-solid fa-user-gear"></i> Profile Settings
     </a>
 
@@ -473,180 +473,18 @@ footer{
 
     <main class="page-container">
 
-        {% block content %}
-
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Dashboard</h1>
-                <p class="page-description">Welcome to Maitri Global CRM</p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <select class="form-select" id="daysFilter"
-                        onchange="window.location.href='?days='+this.value;">
-                    <option value="7" {% if selected_days == 7 %}selected{% endif %}>Last 7 Days</option>
-                    <option value="15" {% if selected_days == 15 %}selected{% endif %}>Last 15 Days</option>
-                    <option value="30" {% if selected_days == 30 %}selected{% endif %}>Last 30 Days</option>
-                    <option value="90" {% if selected_days == 90 %}selected{% endif %}>Last 90 Days</option>
-                    <option value="365" {% if selected_days == 365 %}selected{% endif %}>This Year</option>
-                </select>
-
-                <button class="btn btn-outline-primary" onclick="location.reload();">
-                    <i class="fa-solid fa-rotate"></i> Refresh
-                </button>
-            </div>
-        </div>
-
-        <div class="row g-3">
-
-            <div class="col-xl-4 col-md-6">
-                <a href="{% url 'lead_list' %}" class="kpi-link">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="kpi-label">Total Leads</div>
-                                <div class="kpi-value">{{ lead_count }}</div>
-                                <small class="text-success">Active</small>
-                            </div>
-                            <div class="kpi-icon"><i class="fa-solid fa-user-plus"></i></div>
-                        </div>
+        {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:"info" }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                </a>
+                {% endfor %}
             </div>
+        {% endif %}
 
-            <div class="col-xl-4 col-md-6">
-                <a href="{% url 'company_list' %}" class="kpi-link">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="kpi-label">Total Clients</div>
-                                <div class="kpi-value">{{ company_count }}</div>
-                                <small class="text-success">Active</small>
-                            </div>
-                            <div class="kpi-icon"><i class="fa-solid fa-building"></i></div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-xl-4 col-md-6">
-                <a href="{% url 'opportunity_list' %}" class="kpi-link">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="kpi-label">Total Opportunities</div>
-                                <div class="kpi-value">{{ opportunity_count }}</div>
-                                <small class="text-success">Active</small>
-                            </div>
-                            <div class="kpi-icon"><i class="fa-solid fa-handshake"></i></div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-xl-4 col-md-6">
-                <a href="{% url 'quotation_list' %}" class="kpi-link">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="kpi-label">Total Quotations</div>
-                                <div class="kpi-value">{{ quotation_count }}</div>
-                                <small class="text-success">Active</small>
-                            </div>
-                            <div class="kpi-icon"><i class="fa-solid fa-file-lines"></i></div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-xl-4 col-md-6">
-                <a href="{% url 'invoice_list' %}" class="kpi-link">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="kpi-label">Total Invoices</div>
-                                <div class="kpi-value">{{ invoice_count }}</div>
-                                <small class="text-success">Active</small>
-                            </div>
-                            <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-xl-4 col-md-6">
-                <a href="{% url 'qualified_list' %}" class="kpi-link">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="kpi-label">Total Qualified</div>
-                                <div class="kpi-value">{{ qualified_count }}</div>
-                                <small class="text-success">Active</small>
-                            </div>
-                            <div class="kpi-icon"><i class="fa-solid fa-user-check"></i></div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-        </div>
-
-        <div class="row g-3 mt-1">
-
-            <div class="col-lg-6">
-                <div class="card chart-card">
-                    <h5 class="card-heading mb-3">
-                        <i class="fa-solid fa-chart-pie"></i> Lead Analytics
-                    </h5>
-                    <canvas id="leadChart" height="280"></canvas>
-                </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="card chart-card">
-                    <h5 class="card-heading mb-3">
-                        <i class="fa-solid fa-chart-column"></i> Sales Pipeline
-                    </h5>
-                    <canvas id="oppChart" height="280"></canvas>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="row g-3 mt-1">
-
-            <div class="col-lg-6">
-                <div class="card p-3 h-100">
-                    <h5 class="card-heading mb-3">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        Recent Activities
-                    </h5>
-
-                    <ul class="list-group list-group-flush">
-                        {% for lead in recent_activities %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ lead.name }}</strong><br>
-                                <small class="text-muted">
-                                    {{ lead.status }} | {{ lead.created_at|date:"d M Y H:i" }}
-                                </small>
-                            </div>
-                            <span class="badge bg-primary">
-                                {{ lead.source }}
-                            </span>
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item text-center text-muted">
-                            No recent activity
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-        </div>
-
-        {% endblock %}
+        {% block content %}{% endblock %}
 
         <footer class="text-center mt-5 mb-2 pt-3 border-top">
             <strong>Maitri Global CRM Management System</strong>
@@ -656,63 +494,8 @@ footer{
     </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-const leadCanvas = document.getElementById('leadChart');
-if (leadCanvas) {
-    new Chart(leadCanvas, {
-        type: 'doughnut',
-        data: {
-            labels: {{ lead_chart_labels|safe }},
-            datasets: [{
-                data: {{ lead_chart_data|safe }},
-                backgroundColor: ['#2490ef', '#22c55e', '#ef4444', '#f59e0b', '#8b5cf6'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-}
-
-const oppCanvas = document.getElementById('oppChart');
-if (oppCanvas) {
-    new Chart(oppCanvas, {
-        type: 'bar',
-        data: {
-            labels: {{ opp_chart_labels|safe }},
-            datasets: [{
-                label: 'Sales Pipeline',
-                data: {{ opp_chart_data|safe }},
-                backgroundColor: '#2490ef',
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
-}
-</script>
 
 </body>
 </html>

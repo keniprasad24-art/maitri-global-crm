@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Subscription Management</title>
+{% extends "crm_base.html" %}
+{% block title %}Subscription Management | Maitri Global CRM{% endblock %}
 
-    <style>
+{% block content %}
+<style>
         body{
             font-family:Arial;
             background:#f4f7fc;
@@ -83,10 +82,6 @@
             font-weight:bold;
         }
     </style>
-</head>
-
-<body>
-
 <div class="container">
 
 <h2>Subscription Management</h2>
@@ -173,5 +168,4 @@ Pay
 
 </div>
 
-</body>
-</html>
+{% endblock %}

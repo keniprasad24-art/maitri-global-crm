@@ -74,101 +74,183 @@ def delete_lead(request, id):
 
 # Excel import: 21-column CRM Excel
 def upload_leads_excel(request):
-    if request.method == "POST":
-        excel_file = request.FILES.get("excel_file")
+    """Import the 21-column CRM Excel sheet quickly and safely."""
+    if request.method != "POST":
+        return render(request, "leads/upload_excel.html")
 
-        if not excel_file:
-            messages.error(request, "Please select an Excel file.")
-            return redirect("lead_list")
+    excel_file = request.FILES.get("excel_file")
+    if not excel_file:
+        messages.error(request, "Please select an Excel file.")
+        return redirect("upload_leads_excel")
 
-        try:
-            wb = openpyxl.load_workbook(excel_file, data_only=True)
-            sheet = wb.active
+    try:
+        import re
+        from datetime import datetime, date
+        from decimal import Decimal, InvalidOperation
+        from django.db import transaction
 
-            imported_count = 0
+        wb = openpyxl.load_workbook(excel_file, data_only=True, read_only=True)
+        sheet = wb.active
 
-            for row in sheet.iter_rows(min_row=2, values_only=True):
-                if not row or all(value in (None, "") for value in row):
+        def text(value):
+            return "" if value is None else str(value).strip()
+
+        def parse_date(value):
+            if value in (None, ""):
+                return None
+            if isinstance(value, datetime):
+                return value.date()
+            if isinstance(value, date):
+                return value
+            value = text(value)
+            for fmt in (
+                "%d-%b-%Y", "%d-%B-%Y", "%d/%m/%Y", "%d-%m-%Y",
+                "%Y-%m-%d", "%d.%m.%Y", "%d-%b-%y", "%d-%B-%y",
+            ):
+                try:
+                    return datetime.strptime(value, fmt).date()
+                except ValueError:
                     continue
+            return None
 
-                values = list(row) + [None] * max(0, 21 - len(row))
+        def parse_money(value):
+            if value in (None, ""):
+                return None
+            if isinstance(value, (int, float, Decimal)):
+                return Decimal(str(value))
+            raw = text(value).replace(",", "")
+            # Excel contains values such as "₹8.0 LPM" / "₹2.0 LPM".
+            match = re.search(r"-?\d+(?:\.\d+)?", raw)
+            if not match:
+                return None
+            try:
+                return Decimal(match.group(0))
+            except InvalidOperation:
+                return None
 
-                sr_no = values[0]
-                current_requirements = values[1]
-                lead_received_date = values[2]
-                lead_source = values[3]
-                reference_name = values[4]
-                client_name = values[5]
-                end_client = values[6]
-                location = values[7]
-                contact_person = values[8]
-                designation = values[9]
-                mobile_no = values[10]
-                email_id = values[11]
-                one_time_recurring = values[12]
-                project_duration = values[13]
-                consultant_name = values[14]
-                consultant_cost = values[15]
-                maitri_margin = values[16]
-                lead_stage = values[17]
-                next_follow_up_date = values[18]
-                vendor_working_on = values[19]
-                status = values[20]
+        def parse_sr_no(value):
+            try:
+                return int(float(value)) if value not in (None, "") else 0
+            except (TypeError, ValueError):
+                return 0
 
-                # Required display fields
-                name_value = str(client_name or "").strip()
-                email_value = str(email_id or "").strip()
-                phone_value = str(mobile_no or "").strip()
-                company_value = str(end_client or client_name or "Not Provided").strip()
+        def parse_phone(value):
+            if value in (None, ""):
+                return ""
+            if isinstance(value, float) and value.is_integer():
+                return str(int(value))
+            return text(value)
 
-                # Do not create completely empty lead rows.
-                if not name_value and not email_value and not phone_value:
-                    continue
+        rows_to_create = []
+        skipped_count = 0
+        errors = []
+        existing_keys = set(
+            Lead.objects.filter(source="import")
+            .values_list("sr_no", "client_name", "email_id", "mobile_no")
+        )
 
-                Lead.objects.create(
-                    sr_no=int(sr_no) if isinstance(sr_no, (int, float)) else 0,
-                    current_requirements=str(current_requirements or ""),
-                    lead_received_date=lead_received_date,
-                    lead_source=str(lead_source or ""),
-                    reference_name=str(reference_name or ""),
+        for row_number, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+            if not row or all(value in (None, "") for value in row):
+                continue
+
+            values = list(row) + [None] * max(0, 21 - len(row))
+            sr_no = values[0]
+            current_requirements = values[1]
+            lead_received_date = values[2]
+            lead_source = values[3]
+            reference_name = values[4]
+            client_name = values[5]
+            end_client = values[6]
+            location = values[7]
+            contact_person = values[8]
+            designation = values[9]
+            mobile_no = values[10]
+            email_id = values[11]
+            one_time_recurring = values[12]
+            project_duration = values[13]
+            consultant_name = values[14]
+            consultant_cost = values[15]
+            maitri_margin = values[16]
+            lead_stage = values[17]
+            next_follow_up_date = values[18]
+            vendor_working_on = values[19]
+            status = values[20]
+
+            name_value = text(client_name)
+            email_value = text(email_id)
+            phone_value = parse_phone(mobile_no)
+            company_value = text(end_client) or name_value or "Not Provided"
+
+            if not name_value and not email_value and not phone_value:
+                skipped_count += 1
+                continue
+
+            key = (parse_sr_no(sr_no), name_value, email_value, phone_value)
+            if key in existing_keys:
+                skipped_count += 1
+                continue
+
+            parsed_received = parse_date(lead_received_date)
+            parsed_followup = parse_date(next_follow_up_date)
+            parsed_cost = parse_money(consultant_cost)
+            parsed_margin = parse_money(maitri_margin)
+
+            if lead_received_date not in (None, "") and parsed_received is None:
+                errors.append(f"Row {row_number}: invalid Lead received date; left blank.")
+            if next_follow_up_date not in (None, "") and parsed_followup is None:
+                errors.append(f"Row {row_number}: invalid Next follow up date; left blank.")
+            if consultant_cost not in (None, "") and parsed_cost is None:
+                errors.append(f"Row {row_number}: invalid Consultant cost; left blank.")
+            if maitri_margin not in (None, "") and parsed_margin is None:
+                errors.append(f"Row {row_number}: invalid Maitri Margin; left blank.")
+
+            rows_to_create.append(
+                Lead(
+                    sr_no=parse_sr_no(sr_no),
+                    current_requirements=text(current_requirements),
+                    lead_received_date=parsed_received,
+                    lead_source=text(lead_source),
+                    reference_name=text(reference_name),
                     client_name=name_value,
-                    end_client=str(end_client or ""),
-                    location=str(location or ""),
-                    contact_person=str(contact_person or ""),
-                    designation=str(designation or ""),
+                    end_client=text(end_client),
+                    location=text(location),
+                    contact_person=text(contact_person),
+                    designation=text(designation),
                     mobile_no=phone_value,
                     email_id=email_value,
-                    one_time_recurring=str(one_time_recurring or ""),
-                    project_duration=str(project_duration or ""),
-                    consultant_name=str(consultant_name or ""),
-                    consultant_cost=consultant_cost if consultant_cost not in (None, "") else None,
-                    maitri_margin=maitri_margin if maitri_margin not in (None, "") else None,
-                    lead_stage=str(lead_stage or ""),
-                    next_follow_up_date=next_follow_up_date,
-                    vendor_working_on=str(vendor_working_on or ""),
-                    status=str(status or "New"),
-
-                    # These are the fields used by the existing Lead List.
+                    one_time_recurring=text(one_time_recurring),
+                    project_duration=text(project_duration),
+                    consultant_name=text(consultant_name),
+                    consultant_cost=parsed_cost,
+                    maitri_margin=parsed_margin,
+                    lead_stage=text(lead_stage),
+                    next_follow_up_date=parsed_followup,
+                    vendor_working_on=text(vendor_working_on),
+                    status=text(status) or "New",
                     name=name_value,
                     email=email_value,
                     phone=phone_value,
                     company=company_value,
                     source="import",
                 )
-
-                imported_count += 1
-
-            messages.success(
-                request,
-                f"{imported_count} leads uploaded and saved successfully.",
             )
-            return redirect("lead_list")
+            existing_keys.add(key)
 
-        except Exception as e:
-            messages.error(request, f"Excel upload failed: {e}")
-            return redirect("lead_list")
+        with transaction.atomic():
+            Lead.objects.bulk_create(rows_to_create, batch_size=500)
 
-    return render(request, "leads/upload_excel.html")
+        imported_count = len(rows_to_create)
+        message = f"{imported_count} leads uploaded and saved successfully."
+        if skipped_count:
+            message += f" {skipped_count} empty/duplicate rows skipped."
+        if errors:
+            message += f" {len(errors)} non-fatal field warnings found."
+        messages.success(request, message)
+        return redirect("lead_list")
+
+    except Exception as e:
+        messages.error(request, f"Excel upload failed: {e}")
+        return redirect("lead_list")
 
 
 @csrf_exempt
